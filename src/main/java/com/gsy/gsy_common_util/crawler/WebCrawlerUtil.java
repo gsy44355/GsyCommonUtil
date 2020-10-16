@@ -4,6 +4,7 @@ package com.gsy.gsy_common_util.crawler;
 
 
 import com.gsy.gsy_common_util.fileUtil.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -88,13 +89,14 @@ public class WebCrawlerUtil {
             for (Map.Entry<String,String> entry: entrySet) {
                 conn.addRequestProperty(entry.getKey(),entry.getValue());
             }
+            conn.setConnectTimeout(5000);
             conn.connect();
             location = conn.getHeaderField("Location");
-
+            if (StringUtils.isEmpty(location)){
+                throw new IOException("302跳转获取location异常");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
             throw e;
-//            return get302Location (url,headers);
         }
         return location;
 
@@ -116,10 +118,13 @@ public class WebCrawlerUtil {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(5000);
             connection.setRequestMethod("GET");
-            for (Map.Entry<String,String> entry: headers.entrySet()) {
-                connection.addRequestProperty(entry.getKey(),entry.getValue());
+            if (headers == null || headers.size() == 0){
+                connection.addRequestProperty("accept-encoding","gzip, deflate, br");
+            }else {
+                for (Map.Entry<String,String> entry: headers.entrySet()) {
+                    connection.addRequestProperty(entry.getKey(),entry.getValue());
+                }
             }
-            connection.addRequestProperty("accept-encoding","gzip, deflate, br");
             inputStream = connection.getInputStream();
             GZIPInputStream gzis=new GZIPInputStream(inputStream);
             InputStreamReader reader = new InputStreamReader(gzis,encoding);
@@ -140,7 +145,6 @@ public class WebCrawlerUtil {
         }
         return string;
     }
-
 
 
 }
